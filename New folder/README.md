@@ -23,4 +23,4 @@ A simple quiz platform that allows admins to add, edit, and delete multiple-choi
 ## How to Run
 1. Clone this repository:
    ```sh
-   git clone https://github.com/your-username/your-repo-name.git
+   git clone https:https://github.com/deepika9823/quiz-platform
