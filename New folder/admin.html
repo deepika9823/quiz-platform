@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Quiz Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .btn { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer; margin-top: 10px; }
+        .btn:hover { background-color: #45a049; }
+        .input-field { padding: 10px; border-radius: 5px; margin-bottom: 10px; width: 100%; border: 1px solid #ccc; }
+        .question-list { margin-top: 20px; text-align: left; }
+        .question { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <h1>Admin Panel</h1>
+    <p>Welcome, Admin!</p>
+
+    <!-- Add Question Form -->
+    <div>
+        <h3>Add a New Question</h3>
+        <input type="text" id="questionText" class="input-field" placeholder="Enter question text">
+        <input type="text" id="answerOption1" class="input-field" placeholder="Answer Option 1">
+        <input type="text" id="answerOption2" class="input-field" placeholder="Answer Option 2">
+        <input type="text" id="answerOption3" class="input-field" placeholder="Answer Option 3">
+        <input type="text" id="answerOption4" class="input-field" placeholder="Answer Option 4">
+        <input type="number" id="correctAnswer" class="input-field" placeholder="Correct Answer (1-4)">
+        <button onclick="addQuestion()" class="btn">Add Question</button>
+    </div>
+
+    <!-- List of Questions -->
+    <div class="question-list" id="questionList">
+        <h3>Questions List</h3>
+    </div>
+
+    <script>
+        // Load saved questions
+        loadQuestions();
+
+        // Add a new question
+        function addQuestion() {
+            const questionText = document.getElementById('questionText').value.trim();
+            const answer1 = document.getElementById('answerOption1').value.trim();
+            const answer2 = document.getElementById('answerOption2').value.trim();
+            const answer3 = document.getElementById('answerOption3').value.trim();
+            const answer4 = document.getElementById('answerOption4').value.trim();
+            const correctAnswer = parseInt(document.getElementById('correctAnswer').value.trim(), 10);
+
+            if (!questionText || !answer1 || !answer2 || !answer3 || !answer4 || isNaN(correctAnswer) || correctAnswer < 1 || correctAnswer > 4) {
+                alert("Please fill in all fields correctly.");
+                return;
+            }
+
+            const newQuestion = {
+                questionText,
+                answers: [answer1, answer2, answer3, answer4],
+                correctAnswer
+            };
+
+            let questions = JSON.parse(localStorage.getItem('questions')) || [];
+            questions.push(newQuestion);
+            localStorage.setItem('questions', JSON.stringify(questions));
+
+            // Clear form
+            document.getElementById('questionText').value = '';
+            document.getElementById('answerOption1').value = '';
+            document.getElementById('answerOption2').value = '';
+            document.getElementById('answerOption3').value = '';
+            document.getElementById('answerOption4').value = '';
+            document.getElementById('correctAnswer').value = '';
+
+            // Reload questions
+            loadQuestions();
+        }
+
+        // Load saved questions
+        function loadQuestions() {
+            const questions = JSON.parse(localStorage.getItem('questions')) || [];
+            const questionList = document.getElementById('questionList');
+            questionList.innerHTML = '';
+
+            questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.classList.add('question');
+                questionDiv.innerHTML = `
+                    <strong>Q${index + 1}: </strong>${question.questionText}<br>
+                    1. ${question.answers[0]}<br>
+                    2. ${question.answers[1]}<br>
+                    3. ${question.answers[2]}<br>
+                    4. ${question.answers[3]}<br>
+                    Correct Answer: ${question.answers[question.correctAnswer - 1]}<br>
+                    <button onclick="editQuestion(${index})" class="btn">Edit Question</button>
+                    <button onclick="deleteQuestion(${index})" class="btn">Delete Question</button>
+                `;
+                questionList.appendChild(questionDiv);
+            });
+        }
+
+        // Edit a question
+        function editQuestion(index) {
+            const questions = JSON.parse(localStorage.getItem('questions')) || [];
+            const question = questions[index];
+
+            // Pre-fill the form with existing question data
+            document.getElementById('questionText').value = question.questionText;
+            document.getElementById('answerOption1').value = question.answers[0];
+            document.getElementById('answerOption2').value = question.answers[1];
+            document.getElementById('answerOption3').value = question.answers[2];
+            document.getElementById('answerOption4').value = question.answers[3];
+            document.getElementById('correctAnswer').value = question.correctAnswer;
+
+            // Remove the question
+            deleteQuestion(index);
+
+            // Save the new data when the form is submitted
+            document.querySelector('button[onclick="addQuestion()"]').innerHTML = 'Save Changes';
+            document.querySelector('button[onclick="addQuestion()"]').onclick = function() {
+                saveQuestion(index);
+            };
+        }
+
+        // Save the updated question
+        function saveQuestion(index) {
+            const questionText = document.getElementById('questionText').value.trim();
+            const answer1 = document.getElementById('answerOption1').value.trim();
+            const answer2 = document.getElementById('answerOption2').value.trim();
+            const answer3 = document.getElementById('answerOption3').value.trim();
+            const answer4 = document.getElementById('answerOption4').value.trim();
+            const correctAnswer = parseInt(document.getElementById('correctAnswer').value.trim(), 10);
+
+            const updatedQuestion = {
+                questionText,
+                answers: [answer1, answer2, answer3, answer4],
+                correctAnswer
+            };
+
+            let questions = JSON.parse(localStorage.getItem('questions')) || [];
+            questions[index] = updatedQuestion;
+            localStorage.setItem('questions', JSON.stringify(questions));
+
+            // Reload questions and reset the form
+            loadQuestions();
+            document.querySelector('button[onclick="addQuestion()"]').innerHTML = 'Add Question';
+            document.querySelector('button[onclick="addQuestion()"]').onclick = addQuestion;
+            resetForm();
+        }
+
+        // Delete a question
+        function deleteQuestion(index) {
+            let questions = JSON.parse(localStorage.getItem('questions')) || [];
+            questions.splice(index, 1);
+            localStorage.setItem('questions', JSON.stringify(questions));
+            loadQuestions();
+        }
+
+        // Reset the form fields
+        function resetForm() {
+            document.getElementById('questionText').value = '';
+            document.getElementById('answerOption1').value = '';
+            document.getElementById('answerOption2').value = '';
+            document.getElementById('answerOption3').value = '';
+            document.getElementById('answerOption4').value = '';
+            document.getElementById('correctAnswer').value = '';
+        }
+    </script>
+
+</body>
+</html>

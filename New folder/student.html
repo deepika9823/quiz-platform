@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Panel - Quiz Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            padding: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover { background-color: #45a049; }
+
+        .question-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .question-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .options { margin: 15px 0; text-align: left; display: block; }
+        .options input[type="radio"] { margin-right: 10px; }
+        .options label { font-size: 16px; cursor: pointer; }
+        
+        .question-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .stats { text-align: center; font-size: 16px; margin-bottom: 15px; }
+        .btn-container { text-align: center; }
+        .result { display: none; text-align: center; font-size: 18px; margin-top: 30px; }
+        .leaderboard { display: none; text-align: center; font-size: 18px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1 class="text-center text-2xl font-semibold mb-6">Student Panel</h1>
+
+    <div class="stats" id="stats">
+        <p>Answered: <span id="answeredCount">0</span></p>
+        <p>Unanswered: <span id="unansweredCount">0</span></p>
+    </div>
+
+    <div id="questionContainer" class="question-container">
+        <div id="progress" class="question-header">Loading...</div>
+        <div class="question-header" id="questionText">Loading...</div>
+        <div id="optionsContainer" class="options"></div>
+    </div>
+
+    <div class="question-footer">
+        <button onclick="previousQuestion()" class="btn" id="previousBtn">Previous</button>
+        <button onclick="nextQuestion()" class="btn" id="nextBtn">Next</button>
+        <button onclick="submitQuiz()" class="btn" id="submitBtn" style="display: none;">Submit</button>
+    </div>
+
+    <div id="result" class="result">
+        <h2>Your Score: <span id="score"></span></h2>
+        <button onclick="restartQuiz()" class="btn">Retake Quiz</button>
+    </div>
+
+    <div id="leaderboard" class="leaderboard">
+        <h2>Leaderboard</h2>
+        <p>Top Scorers:</p>
+        <ul id="leaderboardList"></ul>
+    </div>
+
+    <script>
+        let currentQuestionIndex = 0;
+        let selectedAnswers = [];
+        let questions = JSON.parse(localStorage.getItem('questions')) || [];
+
+        function loadQuestion() {
+            if (questions.length === 0) {
+                alert("No questions available.");
+                return;
+            }
+
+            const question = questions[currentQuestionIndex];
+            document.getElementById('questionText').innerText = question.questionText;
+            document.getElementById('progress').innerText = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            question.answers.forEach((answer, index) => {
+                const checked = selectedAnswers[currentQuestionIndex] === index ? "checked" : "";
+                optionsContainer.innerHTML += `
+                    <label class="options">
+                        <input type="radio" name="option" value="${index}" ${checked} onclick="selectAnswer(${index})">
+                        ${answer}
+                    </label>
+                `;
+            });
+            
+            document.getElementById('submitBtn').style.display = currentQuestionIndex === questions.length - 1 ? 'inline-block' : 'none';
+            updateStats();
+        }
+
+        function selectAnswer(selectedIndex) {
+            selectedAnswers[currentQuestionIndex] = selectedIndex;
+            updateStats();
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            questions.forEach((question, index) => {
+                if (selectedAnswers[index] === question.correctAnswer - 1) {
+                    score++;
+                }
+            });
+            
+            document.getElementById('score').innerText = `${score} / ${questions.length}`;
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('questionContainer').style.display = 'none';
+            document.querySelector('.question-footer').style.display = 'none';
+            document.getElementById('stats').style.display = 'none';
+            
+            updateLeaderboard(score);
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            selectedAnswers = [];
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('questionContainer').style.display = 'block';
+            document.querySelector('.question-footer').style.display = 'flex';
+            document.getElementById('stats').style.display = 'block';
+            document.getElementById('leaderboard').style.display = 'none';
+            loadQuestion();
+        }
+
+        function updateStats() {
+            let answered = selectedAnswers.filter(ans => ans !== undefined).length;
+            document.getElementById('answeredCount').innerText = answered;
+            document.getElementById('unansweredCount').innerText = questions.length - answered;
+        }
+
+        function updateLeaderboard(score) {
+            document.getElementById('leaderboard').style.display = 'block';
+            document.getElementById('leaderboardList').innerHTML = `<li>You: ${score} / ${questions.length}</li>`;
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
